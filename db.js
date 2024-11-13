@@ -19,7 +19,7 @@ export function leerTareas(){
 
         try{
 
-            let tareas = await conexion`SELECT * FROM tareas`;
+            let tareas = await conexion`SELECT * FROM tareas ORDER BY id`;
 
             conexion.end(),
 
@@ -74,8 +74,62 @@ export function borrarTarea(id){
     });
 }
 
+//crear la funcionn que permita cambiar el valor del campo "tarea" de un registro (UPDATE)
 
+export function editarTarea(id,texto){
+    return new Promise(async (ok,ko) => {
+        let conexion = conectar();
 
+        try{
+
+            let {count} = await conexion`UPDATE tareas SET tarea = ${texto} WHERE id = ${id}`;
+
+            conexion.end(),
+
+            ok(count);
+
+        }catch(error){
+
+            ko({ error : "error bbdd" });
+
+        }
+    });
+}
+
+export function editarEstado(id){
+    return new Promise(async (ok,ko) => {
+        let conexion = conectar();
+
+        try{
+
+            let {count} = await conexion`UPDATE tareas SET estado = NOT estado WHERE id = ${id}`;
+
+            conexion.end(),
+
+            ok(count);
+
+        }catch(error){
+
+            ko({ error : "error bbdd" });
+
+        }
+    });
+}
+
+/*
+leerTareas()
+.then(tareas => {
+    console.log(tareas);
+    editarEstado(tareas[0].id)
+    .then( x => console.log(x));
+})
+*/
+
+/*
+editarTarea(6,"texto de prueba")
+.then(x => console.log(x))
+.catch(x => console.log(x));
+*/
 
 /*
 borrarTarea(2)
@@ -88,6 +142,9 @@ leerTareas()
 .then(x => console.log(x))
 .catch(x => console.log(x));
 */
+
+
+
 
 
 

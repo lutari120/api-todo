@@ -3,9 +3,11 @@ dotenv.config();//lee el fichero .env y crea las variables de entorno
 //------------------
 
 import express from "express";
-import { leerTareas,crearTarea } from "./db.js";
+import { leerTareas,crearTarea,borrarTarea,editarTarea,editarEstado } from "./db.js";
 
 const servidor = express();
+
+
 
 servidor.use(express.json());
 
@@ -49,8 +51,48 @@ servidor.post("/tareas/nueva", async (peticion,respuesta,siguiente) => {
     }
 });
 
-servidor.delete("/tareas/borrar/:id", (peticion,respuesta) => {
-    respuesta.send("id recibido -->" + peticion.params.id);
+servidor.delete("/tareas/borrar/:id([0-9]+)", async (peticion,respuesta) => {
+
+    try{
+
+        let id = Number(peticion.params.id);
+
+        let count = await borrarTarea(id);
+
+        respuesta.json({ resultado : count ? "ok" : "ko" });
+
+    }catch(error){
+        respuesta.status(500);
+
+        respuesta.json({ error : "error en el servidor" });
+    }
+
+});
+
+servidor.put("/tareas/actualizar/:id([0-9]+)/:operacion(1|2)", async (peticion,respuesta,siguiente) => {
+    let operacion = Number(peticion.params.operacion);
+    let id = Number(peticion.params.id);
+    let {tarea} = peticion.body;
+
+
+    let operaciones = [editarTarea,editarEstado];
+
+    if(operacion == 1 && (!tarea || tarea.trim() == "")){
+        return siguiente(true);
+    }
+
+    try{
+
+        let cantidad = await operaciones[operacion - 1](id,tarea); //clever code (es mejor evitarlo o comentarlo explicandolo con detalle)
+
+        respuesta.json({ resultado : cantidad ? "ok" : "ko"});
+
+    }catch(error){
+        respuesta.status(500);
+
+        respuesta.json({ error : "error en el servidor" });
+    }
+
 });
 
 servidor.use((error,peticion,respuesta,siguiente) => {
@@ -58,7 +100,10 @@ servidor.use((error,peticion,respuesta,siguiente) => {
     respuesta.json({ error : "error en la peticion"});
 });
 
-//crear solo DELETE y probar con fetch
+servidor.use((peticion,respuesta) => {
+    respuesta.status(404);
+    respuesta.json({ error : "recurso no encontrado"});
+});
 
 
 
